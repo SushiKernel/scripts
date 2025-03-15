@@ -97,7 +97,6 @@ EOF
 *Build Info*
 
 • *Commit*: \`${commit_id}\`
-• *Message*: \`${commit_text}\`
 • *Author*: \`${author_name}\`
 EOF
 )
