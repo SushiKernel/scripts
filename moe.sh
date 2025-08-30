@@ -82,7 +82,7 @@ if [ -f "out/arch/arm64/boot/Image.gz-dtb" ] && \
     echo -e "\nKernel compiled successfully! Zipping up...\n"
     if [ -d "$AK3_DIR" ]; then
         cp -r $AK3_DIR AnyKernel3
-    elif ! git clone -q https://github.com/MoeKernel/AnyKernel3; then
+    elif ! git clone -q -b ginkgo https://github.com/MoeKernel/AnyKernel3; then
         echo -e "\nAnyKernel3 repo not found locally and cloning failed! Aborting..."
         exit 1
     fi
@@ -90,7 +90,7 @@ if [ -f "out/arch/arm64/boot/Image.gz-dtb" ] && \
     cp out/arch/arm64/boot/dtbo.img AnyKernel3
     rm -f *zip
     cd AnyKernel3
-    git checkout master &> /dev/null
+    git checkout ginkgo &> /dev/null
     zip -r9 "../$ZIPNAME" * -x '*.git*' README.md *placeholder
     cd ..
     rm -rf AnyKernel3
