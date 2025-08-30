@@ -4,7 +4,7 @@
 
 SECONDS=0
 ZIPNAME="MoeKSU-ginkgo-$(date '+%Y%m%d').zip"
-TC_DIR="$HOME/tc/clang-22.0.0"
+TC_DIR="$HOME/tc/clang-21.0.0"
 GCC_64_DIR="$HOME/tc/aarch64-linux-android-15.0"
 GCC_32_DIR="$HOME/tc/arm-linux-androideabi-15.0"
 AK3_DIR="$HOME/android/AnyKernel3"
@@ -17,7 +17,7 @@ export KBUILD_BUILD_HOST=Nyan
 
 if ! [ -d "${TC_DIR}" ]; then
     echo "Clang not found! Cloning to ${TC_DIR}..."
-    if ! git clone --depth=1 https://gitlab.com/moehacker/clang-r498229b ${TC_DIR}; then
+    if ! git clone --depth=1 -b 21 https://gitlab.com/clangsantoni/zyc_clang ${TC_DIR}; then
         echo "Cloning failed! Aborting..."
         exit 1
     fi
