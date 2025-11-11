@@ -4,7 +4,7 @@
 # Copyright (C) 2024 Shoiya A.
 
 SECONDS=0
-CLANG_VERSION="clang-19.0.0"
+CLANG_VERSION="clang-20.0.0"
 TC_DIR="$HOME/tc/$CLANG_VERSION"
 PATH=$HOME/tc/$CLANG_VERSION/bin:$PATH
 export modpath=AnyKernel3/modules/vendor/lib/modules
@@ -35,7 +35,7 @@ fi
 
 if ! [ -d "${TC_DIR}" ]; then
     echo "Clang not found! Cloning to ${TC_DIR}..." | tee -a "$LOG_FILE"
-    if ! git clone --depth=1 https://gitlab.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r530567.git ${TC_DIR} >> "$LOG_FILE" 2>&1; then
+    if ! git clone --depth=1 https://gitlab.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r547379.git ${TC_DIR} >> "$LOG_FILE" 2>&1; then
         echo "Cloning failed! Aborting..." | tee -a "$LOG_FILE"
         exit 1
     fi
