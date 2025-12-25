@@ -1,9 +1,9 @@
 #!/bin/bash
-# Compile script for MoeKernel
+# Compile script for SushiKernel
 # Copyright (C) 2020-2021 Adithya R.
 
 SECONDS=0
-ZIPNAME="MoeKSU-ginkgo-$(date '+%Y%m%d').zip"
+ZIPNAME="SushiKSU-ginkgo-$(date '+%Y%m%d').zip"
 TC_DIR="$HOME/tc/clang-21.0.0"
 GCC_64_DIR="$HOME/tc/aarch64-linux-android-15.0"
 GCC_32_DIR="$HOME/tc/arm-linux-androideabi-15.0"
