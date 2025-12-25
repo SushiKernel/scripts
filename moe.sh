@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Compile script for MoeKernel
+# Compile script for SushiKernel
 # Copyright (C) 2024 Shoiya A.
 
 SECONDS=0
