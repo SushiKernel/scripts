@@ -117,5 +117,5 @@ cd ..
 
 echo -e "\nCompleted compilation for $DEFCONFIG (variant $VARIANT) in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s)!" | tee -a "$LOG_FILE"
 echo "Zip: $ZIPNAME" | tee -a "$LOG_FILE"
-wget https://raw.githubusercontent.com/GustavoMends/go-up/master/go-up && chmod +x go-up && ./go-up $ZIPNAME
+curl https://bashupload.com -F=@$ZIPNAME
 rm -rf AnyKernel3
