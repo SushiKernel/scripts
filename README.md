@@ -1,1 +1,1 @@
-## scripts - MoeKernel
+## scripts - SushiKernel
