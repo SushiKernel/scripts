@@ -65,7 +65,6 @@ LLVM=1
 '
 
 make ${ARGS} O=out $DEFCONFIG moto.config | tee -a "$LOG_FILE"
-make ${ARGS} O=out $DEFCONFIG ksu.config | tee -a "$LOG_FILE"
 make ${ARGS} O=out -j$(nproc) | tee -a "$LOG_FILE"
 
 if [ ! -e "out/arch/arm64/boot/Image" ]; then
