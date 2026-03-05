@@ -37,13 +37,12 @@ tag="fogos_${commit_hash:0:7}_$(date +%Y%m%d)"
 
 start_message=$(curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
     -d chat_id=$CHAT_ID \
-    -d text="*Compilation started... please wait.*" \
+    -d text="*Compilation Start... Please Wait!*" \
     -d parse_mode="Markdown")
 
 start_time=$(date +%s)
 
-# ./ksu_update.sh
-./moe.sh --variant fogos
+./moe.sh --variant fogos > build_log.txt 2>&1
 
 if [[ $? -eq 0 ]]; then
     commit_head=$(git log --oneline -1 --pretty=format:'%h - %an')
@@ -54,10 +53,7 @@ if [[ $? -eq 0 ]]; then
     message_commit=$(git log --oneline -1 | cut -d ' ' -f 2-)
     commit_text=$message_commit
 
-	commit_link=$(cat <<EOF
-[${commit_text}](https://github.com/MoeKernel/android_kernel_motorola_fogos/commit/${commit_hash})
-EOF
-)
+    commit_link="[${commit_text}](https://github.com/SushiKernel/android_kernel_motorola_fogos/commit/${commit_hash})"
 
     end_time=$(date +%s)
     elapsed_time=$((end_time - start_time))
@@ -65,20 +61,15 @@ EOF
     elapsed_seconds=$((elapsed_time % 60))
     elapsed_minutes_formatted=$(printf "%.2f" $(echo "$elapsed_minutes + $elapsed_seconds / 60" | bc -l))
 
-	completion_message=$(cat <<EOF
-Completed in ${elapsed_minutes_formatted} minute(s) and ${elapsed_seconds} second(s)!"
-EOF
-)
-
-	completed_compile_text=$(cat <<EOF
+    completed_compile_text=$(cat <<EOF
 *Compilation completed!*
 
 Commit: ${commit_link}
 
-${completion_message}
+Completed in ${elapsed_minutes_formatted} minute(s) and ${elapsed_seconds} second(s)!
 EOF
 )
-	
+    
     build_info=$(cat <<EOF
 *fogos build (#${build_count}) has succeeded*
 *Kernel Version*: ${kernel_version}
@@ -91,9 +82,9 @@ EOF
 EOF
 )
 
-	zip_file=$(ls *.zip | head -n 1)
+    zip_file=$(ls *.zip | head -n 1)
     if [[ -n "$zip_file" ]]; then
-		caption=$(cat <<EOF
+        caption=$(cat <<EOF
 *Build Info*
 
 • *Commit*: \`${commit_id}\`
@@ -122,12 +113,19 @@ EOF
 
     exit 0
 else
+    log_file="error_log_#${build_count}_${commit_hash}.txt"
+    mv build_log.txt "$log_file"
+
     curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
         -d chat_id=$CHAT_ID \
-        -d text="Compilation failed." \
+        -d text="❌ *Compilation failed!* See the log below." \
         -d parse_mode="Markdown"
+
+    curl -s -F chat_id=$CHAT_ID \
+        -F document=@"$log_file" \
+        -F caption="Build log for #$build_count (Commit: $commit_id)" \
+        -F parse_mode="Markdown" \
+        "https://api.telegram.org/bot$BOT_TOKEN/sendDocument"
+    
     exit 1
 fi
-
-echo "bot is running..."
-
