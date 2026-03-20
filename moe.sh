@@ -16,7 +16,7 @@ export LLVM=1
 
 AK3_DIR="$HOME/AnyKernel3"
 VARIANTS=("fogos" "fogos")
-DEFCONFIGS=("vendor/fogos_defconfig" "vendor/fogos_defconfig")
+DEFCONFIGS=("vendor/sedona_defconfig" "vendor/sedona_defconfig")
 ZIPNAME_PREFIX="sushi-$(date '+%Y%m%d-%H%M')"
 LOG_FILE="moe.log"
 : > "$LOG_FILE"
