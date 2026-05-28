@@ -4,7 +4,7 @@
 # Copyright (C) 2024 Shoiya A.
 
 SECONDS=0
-CLANG_VERSION="clang-20.0.0"
+CLANG_VERSION="clang-21.0.0"
 TC_DIR="$HOME/tc/$CLANG_VERSION"
 PATH=$HOME/tc/$CLANG_VERSION/bin:$PATH
 export modpath=AnyKernel3/modules/vendor/lib/modules
@@ -34,11 +34,18 @@ elif [[ "$VARIANT" == "fogos" ]]; then
 fi
 
 if ! [ -d "${TC_DIR}" ]; then
-    echo "Clang not found! Cloning to ${TC_DIR}..." | tee -a "$LOG_FILE"
-    if ! git clone --depth=1 https://gitlab.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r547379.git ${TC_DIR} >> "$LOG_FILE" 2>&1; then
-        echo "Cloning failed! Aborting..." | tee -a "$LOG_FILE"
+    echo "Clang not found! Downloading directly to ${TC_DIR}..." | tee -a "$LOG_FILE"
+
+    mkdir -p "${TC_DIR}"
+
+    if ! curl -L "https://git.codelinaro.org/clo/la/kernel_platform/prebuilts/build-tools/-/archive/android-16.0.0_r4/build-tools-android-16.0.0_r4.tar.gz?path=clang-r563880c" \
+         | tar -xz -C "${TC_DIR}" --strip-components=2 >> "$LOG_FILE" 2>&1; then
+
+        echo "Download failed! Aborting..." | tee -a "$LOG_FILE"
         exit 1
     fi
+
+    echo "Clang setup completed successfully!" | tee -a "$LOG_FILE"
 fi
 
 echo -e "\nCompiling for $DEFCONFIG with variant $VARIANT..." | tee -a "$LOG_FILE"
