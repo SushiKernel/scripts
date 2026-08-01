@@ -96,26 +96,23 @@ cp out/arch/arm64/boot/dtbo.img AnyKernel3/dtbo.img
 
 ZIPNAME="${ZIPNAME_PREFIX}-${VARIANT}.zip"
 
-mkdir -p ${modpath}
-kver=$(make kernelversion)
-kmod=$(echo ${kver} | awk -F'.' '{print $3}')
-mkdir -p AnyKernel3/modules/vendor/lib/modules 
-kver=$(make kernelversion)
-kmod=$(echo ${kver} | awk -F'.' '{print $3}')
+MOD_DIR=$(ls -d out/modules/lib/modules/5.4*/ | head -n 1)
+modpath="AnyKernel3/vendor/lib/modules"
 
-cp out/.config AnyKernel3/config
-cp out/arch/arm64/boot/Image AnyKernel3/Image
-cp out/arch/arm64/boot/dtb.img AnyKernel3/dtb
-cp out/arch/arm64/boot/dtbo.img AnyKernel3/dtbo.img
-cp $(find out/modules/lib/modules/5.4* -name '*.ko') ${modpath}/
-cp out/modules/lib/modules/5.4*/modules.{alias,dep,softdep} ${modpath}/
-cp out/modules/lib/modules/5.4*/modules.order ${modpath}/modules.load
+mkdir -p "$modpath"
+find "${MOD_DIR}kernel" -name '*.ko' -exec cp {} "${modpath}/" \;
 
-sed -i 's/\(kernel\/[^: ]*\/\)\([^: ]*\.ko\)/\/vendor\/lib\/modules\/\2/g' ${modpath}/modules.dep
-sed -i 's/.*\///; s/\.ko$//' ${modpath}/modules.load
+cp "${MOD_DIR}modules.alias" "${modpath}/"
+cp "${MOD_DIR}modules.dep" "${modpath}/"
+cp "${MOD_DIR}modules.softdep" "${modpath}/"
+cp "${MOD_DIR}modules.order" "${modpath}/modules.load"
+
+sed -i 's/\(kernel\/[^: ]*\/\)\([^: ]*\.ko\)/\/vendor\/lib\/modules\/\2/g' "${modpath}/modules.dep"
+
+sed -i 's/.*\///; s/\.ko$//' "${modpath}/modules.load"
 
 for useles_modules in "${modules_to_nuke[@]}"; do
-  grep -vE "$useles_modules" ${modpath}/modules.load > /tmp/templd && mv /tmp/templd ${modpath}/modules.load
+  grep -vE "$useles_modules" "${modpath}/modules.load" > /tmp/templd && mv /tmp/templd "${modpath}/modules.load"
 done
 
 cd AnyKernel3
