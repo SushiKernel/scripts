@@ -96,7 +96,7 @@ cp out/arch/arm64/boot/dtbo.img AnyKernel3/dtbo.img
 
 ZIPNAME="${ZIPNAME_PREFIX}-${VARIANT}.zip"
 
-MOD_DIR=$(ls -d out/modules/lib/modules/5.4*/ | head -n 1)
+MOD_DIR=$(ls -dt out/modules/lib/modules/5.4*/ | head -n 1)
 modpath="AnyKernel3/vendor/lib/modules"
 
 mkdir -p "$modpath"
