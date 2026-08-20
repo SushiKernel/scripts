@@ -1,5 +1,0 @@
-4.14.352
-
-This corresponds to 4.19.319 upstream (v4.19.318..v4.19.319).
-
-Signed-off-by: Vegard Nossum <vegard.nossum@oracle.com>

@@ -33,6 +33,7 @@ commit_hash=$(echo $commit_head | cut -d ' ' -f 1)
 kernel_version=$(make kernelversion 2>/dev/null)
 
 build_type="release"
+ORG="SushiKernel"
 tag="fogos_${commit_hash:0:7}_$(date +%Y%m%d)"
 
 start_message=$(curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
@@ -42,7 +43,7 @@ start_message=$(curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMess
 
 start_time=$(date +%s)
 
-./moe.sh --variant fogos > build_log.txt 2>&1
+./sushi.sh -v fogos > build_log.txt 2>&1
 
 if [[ $? -eq 0 ]]; then
     commit_head=$(git log --oneline -1 --pretty=format:'%h - %an')
@@ -53,7 +54,7 @@ if [[ $? -eq 0 ]]; then
     message_commit=$(git log --oneline -1 | cut -d ' ' -f 2-)
     commit_text=$message_commit
 
-    commit_link="[${commit_text}](https://github.com/SushiKernel/android_kernel_motorola_fogos/commit/${commit_hash})"
+    commit_link="[${commit_text}](https://github.com/$ORG/android_kernel_motorola_fogos/commit/${commit_hash})"
 
     end_time=$(date +%s)
     elapsed_time=$((end_time - start_time))
