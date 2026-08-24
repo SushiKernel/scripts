@@ -96,6 +96,64 @@ echo -e "\nCompleted compilation for $DEFCONFIG (variant $VARIANT) in $((SECONDS
 echo "Zip: $ZIPNAME" | tee -a "$LOG_FILE"
 
 [ -f ./go-up ] || (wget https://raw.githubusercontent.com/GustavoMends/go-up/master/go-up && chmod +x go-up)
-./go-up "$ZIPNAME"
+# ./go-up "$ZIPNAME"
 
+upload_telegram_build() {
+    if [[ -f ".env" ]]; then
+        source .env
+    else
+        echo "Telegram upload disabled: .env not found." | tee -a "$LOG_FILE"
+        return 0
+    fi
+
+    if [[ -z "$CHAT_ID" || -z "$BOT_TOKEN" ]]; then
+        echo "Telegram upload disabled: missing CHAT_ID or BOT_TOKEN." | tee -a "$LOG_FILE"
+        return 0
+    fi
+
+    build_count=0
+    [[ -f build_count.txt ]] && build_count=$(cat build_count.txt)
+
+    build_count=$((build_count + 1))
+    echo "$build_count" > build_count.txt
+
+    commit_id=$(git log --oneline -1 --pretty=format:'%h')
+    commit_text=$(git log --oneline -1 --pretty=format:'%s')
+    author_name=$(git log --format='%an' -1)
+    kernel_version=$(make kernelversion 2>/dev/null)
+
+    zip_file="$1"
+
+    if [[ ! -f "$zip_file" ]]; then
+        echo "Zip not found: $zip_file" | tee -a "$LOG_FILE"
+        return 1
+    fi
+
+    caption=$(cat <<EOF
+*SushiKernel build #${build_count}*
+
+• *Kernel*: \`${kernel_version}\`
+• *Commit*: \`${commit_id}\`
+• *Message*: \`${commit_text}\`
+• *Author*: \`${author_name}\`
+
+@SushiKernel
+EOF
+)
+
+    echo "Uploading $zip_file to Telegram..." | tee -a "$LOG_FILE"
+
+    curl -s \
+        -F chat_id="$CHAT_ID" \
+        -F message_thread_id=$TOPIC_ID \
+        -F document=@"$zip_file" \
+        -F caption="$caption" \
+        -F parse_mode="Markdown" \
+        "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
+        >> "$LOG_FILE"
+
+    echo "Telegram upload completed!" | tee -a "$LOG_FILE"
+}
+
+# upload_telegram_build "$ZIPNAME"
 rm -rf AnyKernel3
