@@ -113,7 +113,6 @@ EOF
 )
         curl -s -F chat_id=$CHAT_ID \
             -F document=@"$zip_file" \
-	    -F message_thread_id=$MESSAGE_THREAD_ID \
             -F caption="$caption" \
             -F parse_mode="Markdown" \
             "https://api.telegram.org/bot$BOT_TOKEN/sendDocument"
