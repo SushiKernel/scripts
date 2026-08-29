@@ -4,15 +4,19 @@
 # Copyright (C) 2024 Akari.
 
 SECONDS=0
-CLANG_VERSION="clang-21.0.0"
+
+CLANG_VERSION="zyc-clang-21"
 TC_DIR="$HOME/tc/$CLANG_VERSION"
-PATH=$HOME/tc/$CLANG_VERSION/bin:$PATH
+
+export PATH="$TC_DIR/bin:$PATH"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=Sushi
 export KBUILD_BUILD_HOST=Kernel
-export LLVM_DIR=$HOME/tc/$CLANG_VERSION/bin
+
 export LLVM=1
+export LLVM_IAS=1
+export LLVM_DIR="$TC_DIR/bin"
 
 AK3_DIR="$HOME/AnyKernel3"
 VARIANTS=("bangkk")
@@ -30,15 +34,19 @@ VARIANT="$2"
 DEFCONFIG="${DEFCONFIGS[0]}"
 
 if ! [ -d "${TC_DIR}" ]; then
-    echo "Clang not found! Downloading directly to ${TC_DIR}..." | tee -a "$LOG_FILE"
-    mkdir -p "${TC_DIR}"
+    echo "ZyC Clang 21 not found! Downloading..."
+    mkdir -p "$HOME/tc"
 
-    if ! curl -L "https://git.codelinaro.org/clo/la/kernel_platform/prebuilts/build-tools/-/archive/android-16.0.0_r4/build-tools-android-16.0.0_r4.tar.gz?path=clang-r563880c" \
-         | tar -xz -C "${TC_DIR}" --strip-components=2 >> "$LOG_FILE" 2>&1; then
-        echo "Download failed! Aborting..." | tee -a "$LOG_FILE"
+    git clone --depth=1 -b 21 \
+        https://gitlab.com/clangsantoni/zyc_clang.git \
+        "$TC_DIR"
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to download ZyC Clang!" | tee -a "$LOG_FILE"
         exit 1
     fi
-    echo "Clang setup completed successfully!" | tee -a "$LOG_FILE"
+
+    echo "ZyC Clang setup completed!" | tee -a "$LOG_FILE"
 fi
 
 echo -e "\nCompiling for $DEFCONFIG with variant $VARIANT..." | tee -a "$LOG_FILE"
@@ -47,21 +55,9 @@ mkdir -p out
 make O=out ARCH=arm64 $DEFCONFIG | tee -a "$LOG_FILE"
 
 ARGS="
-CC=clang
-LD=${LLVM_DIR}/ld.lld
 ARCH=arm64
-AR=${LLVM_DIR}/llvm-ar
-NM=${LLVM_DIR}/llvm-nm
-AS=${LLVM_DIR}/llvm-as
-OBJCOPY=${LLVM_DIR}/llvm-objcopy
-OBJDUMP=${LLVM_DIR}/llvm-objdump
-READELF=${LLVM_DIR}/llvm-readelf
-OBJSIZE=${LLVM_DIR}/llvm-size
-STRIP=${LLVM_DIR}/llvm-strip
-LLVM_AR=${LLVM_DIR}/llvm-ar
-LLVM_DIS=${LLVM_DIR}/llvm-dis
-LLVM_NM=${LLVM_DIR}/llvm-nm
 LLVM=1
+LLVM_IAS=1
 "
 
 make ${ARGS} O=out $DEFCONFIG moto.config | tee -a "$LOG_FILE"
