@@ -3,6 +3,7 @@
 # Compile script for SushiKernel
 # Copyright (C) 2024 Akari.
 
+set -e
 SECONDS=0
 
 CLANG_VERSION="zyc-clang-21"
