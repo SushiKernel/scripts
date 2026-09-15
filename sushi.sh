@@ -91,7 +91,7 @@ setup_toolchain() {
 configure() {
     echo -e "\nConfiguring for ${DEFCONFIGS[*]} with variant $VARIANT..." | tee -a "$LOG_FILE"
     mkdir -p out
-    make ${ARGS} O=out "${DEFCONFIGS[@]}" moto.config ksu.config susfs.config | tee -a "$LOG_FILE"
+    make ${ARGS} O=out "${DEFCONFIGS[@]}" | tee -a "$LOG_FILE"
     make ${ARGS} O=out olddefconfig | tee -a "$LOG_FILE"
 }
 
