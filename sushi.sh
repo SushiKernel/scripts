@@ -118,9 +118,9 @@ make_anykernel() {
 
     if [ -d "$AK3_DIR" ]; then
         cp -r $AK3_DIR AnyKernel3
-        git -C AnyKernel3 checkout bangkk &> /dev/null
+        git -C AnyKernel3 checkout bangkk_modules &> /dev/null
     else
-        git clone -q https://github.com/MoeKernel/AnyKernel3 -b bangkk
+        git clone -q https://github.com/MoeKernel/AnyKernel3 -b bangkk_modules
     fi
 
     cp out/.config AnyKernel3/config
