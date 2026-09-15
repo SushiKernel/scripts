@@ -43,7 +43,7 @@ start_message=$(curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMess
 
 start_time=$(date +%s)
 
-BUILD=1 ANYKERNEL=1 ./sushi.sh > build_log.txt 2>&1
+BUILD=1 ANYKERNEL=1 ./sushi.sh
 
 if [[ $? -eq 0 ]]; then
     commit_head=$(git log --oneline -1 --pretty=format:'%h - %an')
