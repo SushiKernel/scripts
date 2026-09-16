@@ -143,10 +143,15 @@ make_anykernel() {
 
     mkdir -p AnyKernel3/modules/vendor/lib/modules
 
-    "$PLACE_MODULES" \
-        "out/modules_install/lib/modules"/* \
-        AnyKernel3/modules/vendor/lib/modules \
-        "/vendor/lib/modules" | tee -a "$LOG_FILE"
+    MODULES_INSTALL_DIR="$(pwd)/out/modules_install/lib/modules"
+
+    (
+        cd AnyKernel3
+        "$PLACE_MODULES" \
+            "$MODULES_INSTALL_DIR"/* \
+            modules/vendor/lib/modules \
+            "/vendor/lib/modules"
+    ) | tee -a "$LOG_FILE"
 
     if [ -f "AnyKernel3/modules/vendor/lib/modules/wlan.ko" ]; then
         echo "Creating qca_cld3_wlan.ko ..." | tee -a "$LOG_FILE"
