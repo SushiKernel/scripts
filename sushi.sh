@@ -35,14 +35,6 @@ ARGS="
 ARCH=arm64
 LLVM=1
 LLVM_IAS=1
-CC=clang
-CROSS_COMPILE=aarch64-linux-gnu-
-LD=ld.lld
-AR=llvm-ar
-NM=llvm-nm
-OBJCOPY=llvm-objcopy
-OBJDUMP=llvm-objdump
-STRIP=llvm-strip
 "
 
 INCLUDE_DTB=0
