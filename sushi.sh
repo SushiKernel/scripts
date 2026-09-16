@@ -29,8 +29,6 @@ DEFCONFIGS=(
 LOG_FILE="moe.log"
 : > "$LOG_FILE"
 
-PLACE_MODULES="$(pwd)/place-modules.sh"
-
 ARGS="
 ARCH=arm64
 LLVM=1
@@ -115,6 +113,9 @@ make_anykernel() {
     else
         git clone -q https://github.com/MoeKernel/AnyKernel3 -b bangkk_modules
     fi
+
+    PLACE_MODULES="$(pwd)/AnyKernel3/place-modules.sh"
+    chmod +x "$PLACE_MODULES" 2>/dev/null || true
 
     cp out/.config AnyKernel3/config
     cp out/arch/arm64/boot/Image AnyKernel3/Image
