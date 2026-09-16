@@ -152,8 +152,6 @@ make_anykernel() {
         cp -f \
             "AnyKernel3/modules/vendor/lib/modules/wlan.ko" \
             "AnyKernel3/modules/vendor/lib/modules/qca_cld3_wlan.ko"
-    else
-        echo "WARNING: wlan.ko não encontrado!" | tee -a "$LOG_FILE"
     fi
 
     find AnyKernel3/modules -name "*.ko" -exec llvm-strip --strip-unneeded -g {} \;
