@@ -25,6 +25,8 @@ DEFCONFIGS=(
     vendor/holi-qgki_defconfig
     vendor/ext_config/lineage_moto-holi.config
     vendor/ext_config/moto-holi-bangkk.config
+    vendor/ext_config/ksu.config
+    vendor/ext_config/susfs.config
 )
 LOG_FILE="moe.log"
 : > "$LOG_FILE"
