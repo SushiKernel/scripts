@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 # Compile script for SushiKernel
-# Copyright (C) 2024 Shoiya A.
+# Copyright (C) 2024 Akari.
 
+set -e
 SECONDS=0
 
 CLANG_VERSION="zyc-clang-21"
@@ -19,40 +20,16 @@ export LLVM_IAS=1
 export LLVM_DIR="$TC_DIR/bin"
 
 AK3_DIR="$HOME/AnyKernel3"
-VARIANTS=("fogos")
-DEFCONFIGS=("vendor/fogos_defconfig")
-ZIPNAME_PREFIX="sushi-$(date '+%Y%m%d-%H%M')"
+VARIANT="fogos"
+DEFCONFIGS=(
+    vendor/holi-qgki_defconfig
+    vendor/ext_config/lineage_moto-holi.config
+    vendor/ext_config/moto-holi-fogos.config
+    vendor/ext_config/ksu.config
+    vendor/ext_config/susfs.config
+)
 LOG_FILE="moe.log"
 : > "$LOG_FILE"
-
-if [[ $# -ne 2 || $1 != "-v" || ! " ${VARIANTS[@]} " =~ " $2 " ]]; then
-    echo "Use: $0 -v {fogos}" | tee -a "$LOG_FILE"
-    exit 1
-fi
-
-VARIANT="$2"
-DEFCONFIG="${DEFCONFIGS[0]}"
-
-if ! [ -d "${TC_DIR}" ]; then
-    echo "ZyC Clang 21 not found! Downloading..."
-    mkdir -p "$HOME/tc"
-
-    git clone --depth=1 -b 21 \
-        https://gitlab.com/clangsantoni/zyc_clang.git \
-        "$TC_DIR"
-
-    if [ $? -ne 0 ]; then
-        echo "Failed to download ZyC Clang!" | tee -a "$LOG_FILE"
-        exit 1
-    fi
-
-    echo "ZyC Clang setup completed!" | tee -a "$LOG_FILE"
-fi
-
-echo -e "\nCompiling for $DEFCONFIG with variant $VARIANT..." | tee -a "$LOG_FILE"
-
-mkdir -p out
-make O=out ARCH=arm64 $DEFCONFIG | tee -a "$LOG_FILE"
 
 ARGS="
 ARCH=arm64
@@ -60,96 +37,149 @@ LLVM=1
 LLVM_IAS=1
 "
 
-make ${ARGS} O=out $DEFCONFIG moto.config | tee -a "$LOG_FILE"
-make ${ARGS} O=out -j$(nproc) | tee -a "$LOG_FILE"
+INCLUDE_DTB=0
+INCLUDE_DTBO=0
 
-if [ ! -e "out/arch/arm64/boot/Image" ]; then
-    echo "ERROR: Image binary not found. Compilation failed!" | tee -a "$LOG_FILE"
+usage() {
+    echo "Use: BUILD=1 ANYKERNEL=1 $0 [--dtb] [--dtbo]" | tee -a "$LOG_FILE"
     exit 1
-fi
-
-echo -e "\nKernel compiled successfully for $DEFCONFIG! Zipping up...\n" | tee -a "$LOG_FILE"
-
-if [ -d "$AK3_DIR" ]; then
-    cp -r $AK3_DIR AnyKernel3
-    git -C AnyKernel3 checkout fogos &> /dev/null
-else
-    git clone -q https://github.com/MoeKernel/AnyKernel3 -b fogos
-fi
-
-cp out/.config AnyKernel3/config
-cp out/arch/arm64/boot/Image AnyKernel3/Image
-[ -f out/arch/arm64/boot/dtb.img ] && cp out/arch/arm64/boot/dtb.img AnyKernel3/dtb
-[ -f out/arch/arm64/boot/dtbo.img ] && cp out/arch/arm64/boot/dtbo.img AnyKernel3/dtbo.img
-
-ZIPNAME="${ZIPNAME_PREFIX}-${VARIANT}.zip"
-
-cd AnyKernel3
-zip -r9 "../$ZIPNAME" * -x .git README.md *placeholder | tee -a "../$LOG_FILE"
-cd ..
-
-echo -e "\nCompleted compilation for $DEFCONFIG (variant $VARIANT) in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s)!" | tee -a "$LOG_FILE"
-echo "Zip: $ZIPNAME" | tee -a "$LOG_FILE"
-
-[ -f ./go-up ] || (wget https://raw.githubusercontent.com/GustavoMends/go-up/master/go-up && chmod +x go-up)
-# ./go-up "$ZIPNAME"
-
-upload_telegram_build() {
-    if [[ -f ".env" ]]; then
-        source .env
-    else
-        echo "Telegram upload disabled: .env not found." | tee -a "$LOG_FILE"
-        return 0
-    fi
-
-    if [[ -z "$CHAT_ID" || -z "$BOT_TOKEN" ]]; then
-        echo "Telegram upload disabled: missing CHAT_ID or BOT_TOKEN." | tee -a "$LOG_FILE"
-        return 0
-    fi
-
-    build_count=0
-    [[ -f build_count.txt ]] && build_count=$(cat build_count.txt)
-
-    build_count=$((build_count + 1))
-    echo "$build_count" > build_count.txt
-
-    commit_id=$(git log --oneline -1 --pretty=format:'%h')
-    commit_text=$(git log --oneline -1 --pretty=format:'%s')
-    author_name=$(git log --format='%an' -1)
-    kernel_version=$(make kernelversion 2>/dev/null)
-
-    zip_file="$1"
-
-    if [[ ! -f "$zip_file" ]]; then
-        echo "Zip not found: $zip_file" | tee -a "$LOG_FILE"
-        return 1
-    fi
-
-    caption=$(cat <<EOF
-*SushiKernel build #${build_count}*
-
-• *Kernel*: \`${kernel_version}\`
-• *Commit*: \`${commit_id}\`
-• *Message*: \`${commit_text}\`
-• *Author*: \`${author_name}\`
-
-@SushiKernel
-EOF
-)
-
-    echo "Uploading $zip_file to Telegram..." | tee -a "$LOG_FILE"
-
-    curl -s \
-        -F chat_id="$CHAT_ID" \
-        -F message_thread_id=$TOPIC_ID \
-        -F document=@"$zip_file" \
-        -F caption="$caption" \
-        -F parse_mode="Markdown" \
-        "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
-        >> "$LOG_FILE"
-
-    echo "Telegram upload completed!" | tee -a "$LOG_FILE"
 }
 
-# upload_telegram_build "$ZIPNAME"
-rm -rf AnyKernel3
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dtb)
+            INCLUDE_DTB=1
+            shift
+            ;;
+        --dtbo)
+            INCLUDE_DTBO=1
+            shift
+            ;;
+        *)
+            echo "Argumento desconhecido: $1" | tee -a "$LOG_FILE"
+            usage
+            ;;
+    esac
+done
+
+setup_toolchain() {
+    if ! [ -d "${TC_DIR}" ]; then
+        echo "ZyC Clang 21 not found! Downloading..."
+        mkdir -p "$HOME/tc"
+
+        git clone --depth=1 -b 21 \
+            https://gitlab.com/clangsantoni/zyc_clang.git \
+            "$TC_DIR"
+
+        if [ $? -ne 0 ]; then
+            echo "Failed to download ZyC Clang!" | tee -a "$LOG_FILE"
+            exit 1
+        fi
+
+        echo "ZyC Clang setup completed!" | tee -a "$LOG_FILE"
+    fi
+}
+
+configure() {
+    echo -e "\nConfiguring for ${DEFCONFIGS[*]} with variant $VARIANT..." | tee -a "$LOG_FILE"
+    mkdir -p out
+    make ${ARGS} O=out "${DEFCONFIGS[@]}" | tee -a "$LOG_FILE"
+    make ${ARGS} O=out olddefconfig | tee -a "$LOG_FILE"
+}
+
+build_image() {
+    make ${ARGS} O=out -j$(nproc) | tee -a "$LOG_FILE"
+
+    if [ ! -e "out/arch/arm64/boot/Image" ]; then
+        echo "ERROR: Image binary not found. Compilation failed!" | tee -a "$LOG_FILE"
+        exit 1
+    fi
+}
+
+build_modules() {
+    echo -e "\nBuilding modules...\n" | tee -a "$LOG_FILE"
+    make ${ARGS} O=out -j$(nproc) modules | tee -a "$LOG_FILE"
+}
+
+modules_install() {
+    rm -rf out/modules_install
+    make ${ARGS} O=out modules_install INSTALL_MOD_PATH=modules_install | tee -a "$LOG_FILE"
+}
+
+make_anykernel() {
+    echo -e "\nZipping up...\n" | tee -a "$LOG_FILE"
+
+    if [ -d "$AK3_DIR" ]; then
+        cp -r $AK3_DIR AnyKernel3
+        git -C AnyKernel3 checkout fogos &> /dev/null
+    else
+        git clone -q https://github.com/MoeKernel/AnyKernel3 -b fogos
+    fi
+
+    PLACE_MODULES="$(pwd)/AnyKernel3/place-modules.sh"
+    chmod +x "$PLACE_MODULES" 2>/dev/null || true
+
+    cp out/.config AnyKernel3/config
+    cp out/arch/arm64/boot/Image AnyKernel3/Image
+
+    if [ "$INCLUDE_DTB" = 1 ]; then
+        if [ -f out/arch/arm64/boot/dtb.img ]; then
+            cp out/arch/arm64/boot/dtb.img AnyKernel3/dtb
+        else
+            echo "WARNING: --dtb passado mas dtb.img não encontrado!" | tee -a "$LOG_FILE"
+        fi
+    fi
+
+    if [ "$INCLUDE_DTBO" = 1 ]; then
+        if [ -f out/arch/arm64/boot/dtbo.img ]; then
+            cp out/arch/arm64/boot/dtbo.img AnyKernel3/dtbo.img
+        else
+            echo "WARNING: --dtbo passado mas dtbo.img não encontrado!" | tee -a "$LOG_FILE"
+        fi
+    fi
+
+    if [ ! -x "$PLACE_MODULES" ]; then
+        echo "ERROR: place-modules.sh não encontrado/executável em $PLACE_MODULES" | tee -a "$LOG_FILE"
+        exit 1
+    fi
+
+    mkdir -p AnyKernel3/modules/vendor/lib/modules
+
+    MODULES_INSTALL_DIR="$(pwd)/out/modules_install/lib/modules"
+
+    (
+        cd AnyKernel3
+        "$PLACE_MODULES" \
+            "$MODULES_INSTALL_DIR"/* \
+            modules/vendor/lib/modules \
+            "/vendor/lib/modules"
+    ) | tee -a "$LOG_FILE"
+
+    find AnyKernel3/modules -name "*.ko" -exec llvm-strip --strip-unneeded -g {} \;
+
+    ZIPNAME="Sushi-$(date '+%Y%m%d-%H%M')-${VARIANT}.zip"
+
+    cd AnyKernel3
+    zip -r9 "../$ZIPNAME" * -x .git README.md *placeholder no-load.txt standard-vendor-load.txt modules-load-recovery.txt place-modules.sh | tee -a "../$LOG_FILE"
+    cd ..
+
+    echo "Zip: $ZIPNAME" | tee -a "$LOG_FILE"
+
+    [ -f ./go-up ] || (wget https://raw.githubusercontent.com/GustavoMends/go-up/master/go-up && chmod +x go-up)
+    ./go-up "$ZIPNAME"
+
+    rm -rf AnyKernel3
+}
+
+setup_toolchain
+configure
+
+[ "$BUILD" = 1 ] && (build_image && build_modules && modules_install)
+
+[ "$ANYKERNEL" = 1 ] && make_anykernel
+
+echo -e "\nCompleted in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s)!" | tee -a "$LOG_FILE"
+
+# Build command:
+# BUILD=1 ANYKERNEL=1 ./sushi.sh
+# BUILD=1 ANYKERNEL=1 ./sushi.sh [--dtb] [--dtbo]
