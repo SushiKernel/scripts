@@ -165,7 +165,7 @@ make_anykernel() {
     ZIPNAME="Sushi-$(date '+%Y%m%d-%H%M')-${VARIANT}.zip"
 
     cd AnyKernel3
-    zip -r9 "../$ZIPNAME" * -x .git README.md *placeholder | tee -a "../$LOG_FILE"
+    zip -r9 "../$ZIPNAME" * -x .git README.md *placeholder no-load.txt standard-vendor-load.txt modules-load-recovery.txt | tee -a "../$LOG_FILE"
     cd ..
 
     echo "Zip: $ZIPNAME" | tee -a "$LOG_FILE"
