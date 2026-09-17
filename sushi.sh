@@ -155,13 +155,6 @@ make_anykernel() {
             "/vendor/lib/modules"
     ) | tee -a "$LOG_FILE"
 
-    if [ -f "AnyKernel3/modules/vendor/lib/modules/wlan.ko" ]; then
-        echo "Creating qca_cld3_wlan.ko ..." | tee -a "$LOG_FILE"
-        cp -f \
-            "AnyKernel3/modules/vendor/lib/modules/wlan.ko" \
-            "AnyKernel3/modules/vendor/lib/modules/qca_cld3_wlan.ko"
-    fi
-
     find AnyKernel3/modules -name "*.ko" -exec llvm-strip --strip-unneeded -g {} \;
 
     ZIPNAME="Sushi-$(date '+%Y%m%d-%H%M')-${VARIANT}.zip"
