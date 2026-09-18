@@ -6,8 +6,26 @@
 set -e
 SECONDS=0
 
-CLANG_VERSION="zyc-clang-21"
-TC_DIR="$HOME/tc/$CLANG_VERSION"
+# Toolchain:
+#   CLANG=zyc     -> ZyC Clang 21
+#   CLANG=google  -> Google Clang r563880c
+CLANG="${CLANG:-zyc}"
+
+case "$CLANG" in
+    zyc)
+        CLANG_VERSION="zyc-clang-21"
+        TC_DIR="$HOME/tc/$CLANG_VERSION"
+        ;;
+    google)
+        CLANG_VERSION="clang-r563880c"
+        TC_DIR="$HOME/tc/$CLANG_VERSION"
+        ;;
+    *)
+        echo "ERROR: Toolchain desconhecida: $CLANG"
+        echo "Use: CLANG=zyc ou CLANG=google"
+        exit 1
+        ;;
+esac
 
 export PATH="$TC_DIR/bin:$PATH"
 
@@ -21,6 +39,7 @@ export LLVM_DIR="$TC_DIR/bin"
 
 AK3_DIR="$HOME/AnyKernel3"
 VARIANT="fogos"
+
 DEFCONFIGS=(
     vendor/holi-qgki_defconfig
     vendor/ext_config/lineage_moto-holi.config
@@ -28,6 +47,7 @@ DEFCONFIGS=(
     vendor/ext_config/ksu.config
     vendor/ext_config/susfs.config
 )
+
 LOG_FILE="moe.log"
 : > "$LOG_FILE"
 
@@ -41,7 +61,7 @@ INCLUDE_DTB=0
 INCLUDE_DTBO=0
 
 usage() {
-    echo "Use: BUILD=1 ANYKERNEL=1 $0 [--dtb] [--dtbo]" | tee -a "$LOG_FILE"
+    echo "Use: CLANG=zyc|google BUILD=1 ANYKERNEL=1 $0 [--dtb] [--dtbo]" | tee -a "$LOG_FILE"
     exit 1
 }
 
@@ -63,21 +83,36 @@ while [[ $# -gt 0 ]]; do
 done
 
 setup_toolchain() {
-    if ! [ -d "${TC_DIR}" ]; then
-        echo "ZyC Clang 21 not found! Downloading..."
-        mkdir -p "$HOME/tc"
-
-        git clone --depth=1 -b 21 \
-            https://gitlab.com/clangsantoni/zyc_clang.git \
-            "$TC_DIR"
-
-        if [ $? -ne 0 ]; then
-            echo "Failed to download ZyC Clang!" | tee -a "$LOG_FILE"
-            exit 1
-        fi
-
-        echo "ZyC Clang setup completed!" | tee -a "$LOG_FILE"
+    if [ -d "${TC_DIR}" ] && [ -x "${TC_DIR}/bin/clang" ]; then
+        echo "${CLANG} Clang found at ${TC_DIR}" | tee -a "$LOG_FILE"
+        return
     fi
+
+    echo "${CLANG} Clang not found! Downloading..." | tee -a "$LOG_FILE"
+    mkdir -p "$HOME/tc"
+
+    case "$CLANG" in
+        zyc)
+            git clone --depth=1 -b 21 \
+                https://gitlab.com/clangsantoni/zyc_clang.git \
+                "$TC_DIR"
+
+            echo "ZyC Clang setup completed!" | tee -a "$LOG_FILE"
+            ;;
+        google)
+            mkdir -p "$TC_DIR"
+
+            if ! curl -L \
+                "https://git.codelinaro.org/clo/la/kernel_platform/prebuilts/build-tools/-/archive/android-16.0.0_r4/build-tools-android-16.0.0_r4.tar.gz?path=clang-r563880c" \
+                | tar -xz -C "${TC_DIR}" --strip-components=2 >> "$LOG_FILE" 2>&1; then
+                echo "Google Clang download failed! Aborting..." | tee -a "$LOG_FILE"
+                rm -rf "$TC_DIR"
+                exit 1
+            fi
+
+            echo "Google Clang setup completed!" | tee -a "$LOG_FILE"
+            ;;
+    esac
 }
 
 configure() {
@@ -182,4 +217,4 @@ echo -e "\nCompleted in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second
 
 # Build command:
 # BUILD=1 ANYKERNEL=1 ./sushi.sh
-# BUILD=1 ANYKERNEL=1 ./sushi.sh [--dtb] [--dtbo]
+# CLANG=google BUILD=1 ANYKERNEL=1 ./sushi.sh [--dtb] [--dtbo]
