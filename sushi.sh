@@ -200,8 +200,8 @@ make_anykernel() {
 
     echo "Zip: $ZIPNAME" | tee -a "$LOG_FILE"
 
-    [ -f ./go-up ] || (wget https://raw.githubusercontent.com/GustavoMends/go-up/master/go-up && chmod +x go-up)
-    ./go-up "$ZIPNAME"
+    #[ -f ./go-up ] || (wget https://raw.githubusercontent.com/GustavoMends/go-up/master/go-up && chmod +x go-up)
+    #./go-up "$ZIPNAME"
 
     rm -rf AnyKernel3
 }
