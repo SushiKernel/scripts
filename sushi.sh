@@ -116,10 +116,17 @@ setup_toolchain() {
 }
 
 configure() {
-    # ksu
+    # KernelSU
+    git submodule update --init --recursive KernelSU 2>/dev/null || true
     curl -LSs "https://raw.githubusercontent.com/Baka-SU/BakaSU/main/kernel/setup.sh" | bash
-    cat KernelSU/kernel
-    
+
+    if [ ! -d KernelSU/kernel ]; then
+        echo "ERROR: KernelSU/kernel dont exist!" | tee -a "$LOG_FILE"
+        ls -la . drivers | grep -i kernelsu
+        exit 1
+    fi
+    ls -la drivers/kernelsu
+
     echo -e "\nConfiguring for ${DEFCONFIGS[*]} with variant $VARIANT..." | tee -a "$LOG_FILE"
     mkdir -p out
     make ${ARGS} O=out "${DEFCONFIGS[@]}" | tee -a "$LOG_FILE"
