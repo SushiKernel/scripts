@@ -116,6 +116,10 @@ setup_toolchain() {
 }
 
 configure() {
+    # ksu
+    curl -LSs "https://raw.githubusercontent.com/Baka-SU/BakaSU/main/kernel/setup.sh" | bash
+    cat KernelSU/kernel
+    
     echo -e "\nConfiguring for ${DEFCONFIGS[*]} with variant $VARIANT..." | tee -a "$LOG_FILE"
     mkdir -p out
     make ${ARGS} O=out "${DEFCONFIGS[@]}" | tee -a "$LOG_FILE"
