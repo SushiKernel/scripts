@@ -115,7 +115,7 @@ EOF
     exit 0
 else
     log_file="error_log_#${build_count}_${commit_hash}.txt"
-    mv build_log.txt "$log_file"
+    mv moe.log "$log_file"
 
     curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
         -d chat_id=$CHAT_ID \
