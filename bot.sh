@@ -43,7 +43,6 @@ start_message=$(curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMess
 
 start_time=$(date +%s)
 
-curl -LSs "https://raw.githubusercontent.com/Baka-SU/BakaSU/main/kernel/setup.sh" | bash
 CLANG=google BUILD=1 ANYKERNEL=1 ./sushi.sh
 
 if [[ $? -eq 0 ]]; then
