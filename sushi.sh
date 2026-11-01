@@ -45,7 +45,6 @@ DEFCONFIGS=(
     vendor/ext_config/lineage_moto-holi.config
     vendor/ext_config/moto-holi-fogos.config
     vendor/ext_config/ksu.config
-    vendor/ext_config/susfs.config
 )
 
 LOG_FILE="moe.log"
